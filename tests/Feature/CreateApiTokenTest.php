@@ -9,13 +9,18 @@ use Laravel\Jetstream\Http\Livewire\ApiTokenManager;
 use Livewire\Livewire;
 use Tests\TestCase;
 
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
 class CreateApiTokenTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_api_tokens_can_be_created(): void
+    public function testApiTokensCanBeCreated(): void
     {
-        if (! Features::hasApiFeatures()) {
+        if (!Features::hasApiFeatures()) {
             $this->markTestSkipped('API support is not enabled.');
         }
 
@@ -23,13 +28,14 @@ class CreateApiTokenTest extends TestCase
 
         Livewire::test(ApiTokenManager::class)
             ->set(['createApiTokenForm' => [
-                'name' => 'Test Token',
+                'name'        => 'Test Token',
                 'permissions' => [
                     'read',
                     'update',
                 ],
             ]])
-            ->call('createApiToken');
+            ->call('createApiToken')
+        ;
 
         $this->assertCount(1, $user->fresh()->tokens);
         $this->assertEquals('Test Token', $user->fresh()->tokens->first()->name);
