@@ -14,7 +14,7 @@ return new class extends Migration
 
             // Références Jetstream
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete()->comment('Client associé (si connecté)');
-            $table->foreignId('team_id')->nullable()->constrained()->nullOnDelete()->comment('Équipe associée (pour les comptes business)');
+            // $table->foreignId('team_id')->nullable()->constrained()->nullOnDelete()->comment('Équipe associée (pour les comptes business)');
 
             // Informations de commande
             $table->string('order_number', 30)->unique()->comment('Numéro de commande unique');
@@ -62,30 +62,76 @@ return new class extends Migration
         });
 
         // Table des articles commandés
+
+
         Schema::create('order_items', function (Blueprint $table) {
             $table->id()->comment('Identifiant unique de la ligne de commande');
 
-            $table->foreignId('order_id')->constrained()->cascadeOnDelete()->comment('Commande associée');
-            $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete()->comment('Produit associé');
+            // Références
+            $table->foreignId('order_id')
+                ->constrained()
+                ->cascadeOnDelete()
+                ->comment('Commande associée');
 
-            // Snapshot du produit au moment de la commande
+            $table->foreignId('product_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete()
+                ->comment('Produit associé');
+
+            // Snapshots du produit au moment de la commande
             $table->string('product_name', 150)->comment('Nom du produit au moment de la commande');
             $table->string('sku', 50)->comment('SKU au moment de la commande');
-            $table->decimal('unit_price', 12, 2)->comment('Prix unitaire');
+            $table->text('description')->nullable()->comment('Description au moment de la commande');
 
-            // Quantité et calculs
+            // Prix et quantité
+            $table->decimal('unit_price', 12, 2)->comment('Prix unitaire au moment de la commande');
             $table->integer('quantity')->comment('Quantité commandée');
             $table->decimal('total_price', 12, 2)->comment('Prix total (unit_price * quantity)');
 
-            // Options
+            // Options et personnalisations
             $table->json('options')->nullable()->comment('Options/variantes du produit');
+            $table->json('customizations')->nullable()->comment('Personnalisations spécifiques');
+
+            // Taxes et remises
+            $table->decimal('tax_rate', 5, 2)->default(0.00)->comment('Taux de taxe appliqué (%)');
+            $table->decimal('discount_amount', 12, 2)->default(0.00)->comment('Montant de remise appliqué');
+
+            // Intégration Laravel Cashier (pour les abonnements)
+            $table->string('stripe_price_id')->nullable()->comment('ID Stripe du prix');
+            $table->string('stripe_subscription_id')->nullable()->comment('ID Stripe de l\'abonnement');
+
+            // Intégration Spatie Media Library
+            $table->string('featured_image_url', 2048)->nullable()->comment('URL de l\'image principale');
+            $table->json('media_urls')->nullable()->comment('URLs des médias associés');
+
+            // Suivi individuel
+            $table->timestamp('shipped_at')->nullable()->comment('Date d\'expédition de cet article');
+            $table->timestamp('delivered_at')->nullable()->comment('Date de livraison de cet article');
+            $table->string('tracking_number', 100)->nullable()->comment('Numéro de suivi spécifique');
+
+            // Statut pour Filament
+            $table->enum('status', [
+                'pending',
+                'confirmed',
+                'shipped',
+                'delivered',
+                'returned',
+                'refunded'
+            ])->default('pending')->index()->comment('Statut individuel de l\'article');
 
             $table->timestamps();
 
-            // Index
+            // Index optimisés
             $table->index('order_id');
             $table->index('sku');
+            $table->index('product_id');
+            $table->index('status');
+            $table->index('created_at');
         });
+
+
+
 
         // Table des historiques de statut
         Schema::create('order_status_histories', function (Blueprint $table) {
@@ -95,13 +141,13 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete()->comment('Utilisateur ayant modifié le statut');
 
             $table->enum('status', [
-                'pending',
-                'confirmed',
-                'processing',
-                'shipped',
-                'delivered',
-                'cancelled',
-                'refunded'
+                'pending', //en attente
+                'confirmed',//  confirmé
+                'processing', //  traitement
+                'shipped', //  expédié
+                'delivered', // livré
+                'cancelled', // annulé
+                'refunded' //  remboursé
             ])->comment('Statut à ce moment');
 
             $table->text('notes')->nullable()->comment('Commentaire sur le changement');
@@ -115,10 +161,11 @@ return new class extends Migration
         });
     }
 
-    public function down(): void
-    {
+        public function down(): void
+        {
         Schema::dropIfExists('order_status_histories');
         Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
-    }
+        }
+
 };
