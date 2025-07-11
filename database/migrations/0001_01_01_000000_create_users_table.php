@@ -30,7 +30,7 @@ return new class extends Migration
             $table->index('shipping_city');
             $table->index('shipping_postal_code');
 
-            $table->foreignId('current_team_id')->nullable();
+            // $table->foreignId('current_team_id')->nullable();
             $table->string('profile_photo_path', 2048)->nullable();
             $table->timestamps(); // stocke la date a laquelle on creer un user
         });

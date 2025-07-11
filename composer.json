@@ -11,10 +11,11 @@
         "laravel/jetstream": "^5.3",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
-        "livewire/livewire": "^3.0"
+        "livewire/livewire": "^3.0",
+        "spatie/laravel-permission": "^6.20"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.15",
+        "barryvdh/laravel-debugbar": "*",
         "barryvdh/laravel-ide-helper": "^3.5",
         "fakerphp/faker": "^1.23",
         "friendsofphp/php-cs-fixer": "^3.76",
@@ -39,11 +40,19 @@
     },
     "scripts": {
 
+        "ide-helper": [
+        "@php artisan ide-helper:generate",
+        "@php artisan ide-helper:models --nowrite",
+        "@php artisan ide-helper:meta"
+    ],
+
+
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",
             "@php artisan ide-helper:generate",
-            "@php artisan ide-helper:meta"
+            "@php artisan ide-helper:meta",
+            "@php artisan ide-helper:models --nowrite"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
