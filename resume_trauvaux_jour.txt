@@ -1,0 +1,14 @@
+14/07/2025 17:16
+
+Ajout de Event Jobs et Mail j'ai aussi modifier le logger en ajoutant user_event et user_log
+
+Je vais utiliser le package umpirsky/country-list pour la liste des pays  et le package giggsey/libphonenumber-for-php pour la liste  des téléphones
+
+Installation du package composer require league/iso3166
+
+Finalement j'ai supprimer les packages league/iso3166 et  umpirsky/country-list
+Pour ensuite utiliser juste une liste des pays que j'ai juste télécharché
+
+j'ai trouvé mieux que  giggsey/libphonenumber-for-php et c'est Propaganistas/Phone en plus il est specifique a laravel
+
+le model user  est fini

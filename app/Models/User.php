@@ -10,9 +10,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\Log;
-use App\Models\Exception;
-
+use Illuminate\Support\Facades\Log;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 
 /**
@@ -55,7 +54,7 @@ class User extends Authenticatable
 {
     use HasApiTokens;
 
-    use HasRoles; // pour les rôles avec spacie
+    use HasRoles; // pour les rôles avec spatie
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
@@ -69,8 +68,22 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+
+    /**
+     * La propriété $appends permet d’ajouter automatiquement des
+     * attributs calculés à la sortie JSON ou tableau d’un modèle,
+     * sans stocker ces champs en base de données.
+     *
+     *Principe :
+     *  Vous listez dans $appends les noms d’attributs fictifs.
+     *  Laravel recherche pour chacun la méthode getXxxAttribute() correspondante.
+     *  Lors de la sérialisation (toArray(), toJson()), ces valeurs calculées sont injectées au modèle.
+     */
     protected $appends = [
         'profile_photo_url',
+        'full_shipping_address',
+        'initials',
+        'formatted_phone',
     ];
 
     /**
@@ -78,6 +91,8 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+
+    // Permet d'eviter les attaque en masse
     protected $fillable = [
         'name',
         'email',
@@ -91,7 +106,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * The attributes that should be hidden for serialization->(affichage sous farmat JSON ou autre)
      *
      * @var array<int, string>
      */
@@ -120,12 +135,55 @@ class User extends Authenticatable
     {
         parent::boot();
 
-        // 1. Assigner un rôle par défaut (ton exemple)
+        // ========== ÉVÉNEMENT : AVANT CRÉATION ==========
+        static::creating(function ($user) {
+            // Validation des données essentielles
+            if (empty($user->name)) {
+                throw new \InvalidArgumentException('Le nom est obligatoire');
+            }
+
+            if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                throw new \InvalidArgumentException('Format email invalide');
+            }
+
+            // Génération d'identifiant unique
+            $user->uuid = $user->uuid ?? \Illuminate\Support\Str::uuid();
+
+            // Journalisation avec contexte
+            \Log::channel('user_events')->info('Création utilisateur en cours', [
+                'email' => $user->email,
+                'ip' => request()->ip()
+            ]);
+        });
+
+        // ========== ÉVÉNEMENT : APRÈS CRÉATION ==========
         static::created(function ($user) {
             try {
-                $user->assignRole('user');
+                // Assignation du rôle avec configuration
+                $defaultRole = config('permission.default_role', 'user');
+                $user->assignRole($defaultRole);
+
+                // Création asynchrone de ressources
+                \App\Jobs\CreateUserStorageJob::dispatch($user->id);
+
+                if (config('app.send_welcome_emails')) {
+                    \App\Jobs\SendWelcomeEmailJob::dispatch($user);
+                }
+
+                // Journalisation succès
+                \Log::channel('user_events')->info('Utilisateur créé', [
+                    'id' => $user->id,
+                    'roles' => $user->getRoleNames()
+                ]);
             } catch (\Exception $e) {
-                \Log::error('Impossible d\'assigner le rôle user: ' . $e->getMessage());
+                \Log::channel('user_errors')->error('Échec création utilisateur', [
+                    'id' => $user->id,
+                    'error' => $e->getMessage(),
+                    'exception' => get_class($e)
+                ]);
+
+                // Notification aux administrateurs
+                \App\Events\UserCreationFailed::dispatch($user, $e);
             }
         });
     }
@@ -185,14 +243,9 @@ class User extends Authenticatable
      */
     public function getInitialsAttribute()
     {
-        $names = explode(' ', $this->name);
-        $initials = '';
-
-        foreach ($names as $name) {
-            $initials .= substr($name, 0, 1);
-        }
-
-        return strtoupper($initials);
+        return collect(explode(' ', $this->name))
+            ->map(fn($part) => strtoupper(substr($part, 0, 1)))
+            ->implode('');
     }
 
     /**
@@ -231,24 +284,27 @@ class User extends Authenticatable
     /**
      * Obtenir le nom du pays depuis le code ISO
      */
-    public function getCountryName()
+    public function getCountryName(?string $locale = null): ?string
     {
-        $countries = [
-            'FR' => 'France',
-            'BE' => 'Belgique',
-            'CH' => 'Suisse',
-            'CA' => 'Canada',
-            'US' => 'États-Unis',
-            'GB' => 'Royaume-Uni',
-            'DE' => 'Allemagne',
-            'ES' => 'Espagne',
-            'IT' => 'Italie',
-            'BF' => 'Burkina Faso',
-            // Ajouter d'autres pays selon tes besoins
-        ];
+        // Code pays non défini
+        if (empty($this->shipping_country)) {
+            return null;
+        }
 
-        return $countries[$this->shipping_country] ?? $this->shipping_country;
+        try {
+            // Détecter la langue : paramètre, sinon celle de locale
+            $locale = $locale ?? app()->getLocale();
+
+            // Récupère la bonne liste
+            $countryList = collect(config("countries.$locale"));
+
+            // Retourne le nom traduit, ou le code s’il est absent
+            return $countryList->get($this->shipping_country, $this->shipping_country);
+        } catch (\Exception $e) {
+            return $this->shipping_country;
+        }
     }
+
 
     /**
      * Obtenir l'URL par défaut de la photo de profil
@@ -261,16 +317,23 @@ class User extends Authenticatable
     /**
      * Formater le numéro de téléphone
      */
+
     public function getFormattedPhoneAttribute()
     {
         if (!$this->phone) {
             return null;
         }
 
-        // Exemple de formatage simple
-        return preg_replace('/(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', '$1 $2 $3 $4 $5', $this->phone);
-    }
+        try {
+            // Utilisez le pays de l'utilisateur s'il est disponible, sinon par défaut 'FR'
+            $country = $this->country_code ?? 'bf';
 
+            return PhoneNumber::make($this->phone, $country)->formatInternational();
+        } catch (\Exception $e) {
+            // Fallback en cas d'erreur
+            return $this->phone;
+        }
+    }
     // ========== SCOPES ==========
 
     /**

@@ -87,7 +87,7 @@ return [
             'handler_with' => [
                 'host'             => env('PAPERTRAIL_URL'),
                 'port'             => env('PAPERTRAIL_PORT'),
-                'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
+                'connectionString' => 'tls://' . env('PAPERTRAIL_URL') . ':' . env('PAPERTRAIL_PORT'),
             ],
             'processors' => [PsrLogMessageProcessor::class],
         ],
@@ -124,5 +124,18 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        'user_events' => [
+            'driver' => 'single',
+            'path'   => storage_path('logs/user_events.log'),
+            'level'  => 'info',
+        ],
+        'user_errors' => [
+            'driver' => 'single',
+            'path'   => storage_path('logs/user_errors.log'),
+            'level'  => 'error',
+        ],
+
+
     ],
 ];

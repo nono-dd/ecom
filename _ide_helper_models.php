@@ -52,15 +52,28 @@ namespace App\Models{
  * @property string|null $shipping_postal_code
  * @property string|null $billing_address
  * @property string|null $phone Format international
- * @property int|null $current_team_id
  * @property string|null $profile_photo_path
+ * @property-read mixed $formatted_phone
+ * @property-read mixed $full_shipping_address
+ * @property-read mixed $initials
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Permission> $permissions
+ * @property-read int|null $permissions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Role> $roles
+ * @property-read int|null $roles_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User byCity($city)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User byCountry($country)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User permission($permissions, $without = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User role($roles, $guard = null, $without = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User verified()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereBillingAddress($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCurrentTeamId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhone($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereProfilePhotoPath($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereShippingCity($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereShippingCountry($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereShippingPostalCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withCompleteAddress()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
  */
 	class User extends \Eloquent {}
 }
