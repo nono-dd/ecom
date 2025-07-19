@@ -1,7 +1,7 @@
 <?php
 namespace App\Enums;
 
-enum OrderStatus: string
+enum OrderItemStatus: string
 {
     case Pending    = 'pending';
     case Confirmed  = 'confirmed';
