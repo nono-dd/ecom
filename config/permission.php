@@ -71,6 +71,10 @@ return [
         'role_has_permissions' => 'role_has_permissions',
     ],
 
+
+    'default_role' => env('PERMISSION_DEFAULT_ROLE', 'user'),
+
+
     'column_names' => [
         /*
          * Change this if you want to name the related pivots other than defaults

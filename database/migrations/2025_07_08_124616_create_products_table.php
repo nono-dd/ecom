@@ -16,9 +16,10 @@ return new class extends Migration
             $table->string('name', 150)->comment('Nom du produit');
             $table->string('slug', 160)->unique()->comment('Slug pour les URLs SEO');
             $table->text('description')->nullable()->comment('Description du produit');
+            $table->string('marque');
 
-            $table->decimal('price', 12, 2)->comment('Le prix du produit');
-            $table->decimal('cost_price', 12, 2)->nullable()->comment('Prix de revient');
+            $table->decimal('price', 10, 2)->comment('Le prix du produit');
+            $table->decimal('cost_price', 10, 2)->nullable()->comment('Prix de revient');
 
             $table->integer('stock')->default(0)->comment('La quantite de stock dans la boutique');
             $table->string('sku', 50)->unique()->comment('La référence unique du produit');

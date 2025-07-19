@@ -12,6 +12,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Facades\Log;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use Illuminate\Validation\Rule;
 
 
 /**
@@ -61,6 +62,7 @@ class User extends Authenticatable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
+
     // use Exception;
 
     /**
@@ -102,7 +104,9 @@ class User extends Authenticatable
         'profile_photo_path',
         'billing_address',
         'phone',
+        'email_verified_at',
         'password',
+        'remember_token'
     ];
 
     /**
@@ -130,6 +134,44 @@ class User extends Authenticatable
         ];
     }
 
+    // ========== RELATIONS ==========
+    /**
+     * Mise en place des differentes relations tout en sachant que:
+     * 1- Users have several addresses
+     * 2- Users have several orders
+     * 3- Users have several reviews
+     */
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function sellings()
+    {
+        return $this->hasMany(Selling::class);
+    }
+
+    public function countries()
+    {
+        return $this->belongsToMany(Country::class, 'addresses', 'user_id', 'country')
+            ->distinct();
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
 
     protected static function boot()
     {
@@ -147,7 +189,7 @@ class User extends Authenticatable
             }
 
             // Génération d'identifiant unique
-            $user->uuid = $user->uuid ?? \Illuminate\Support\Str::uuid();
+            // $user->uuid = $user->uuid ?? \Illuminate\Support\Str::uuid();
 
             // Journalisation avec contexte
             \Log::channel('user_events')->info('Création utilisateur en cours', [
@@ -256,6 +298,19 @@ class User extends Authenticatable
         return $this->profile_photo_path
             ? asset('storage/' . $this->profile_photo_path)
             : $this->getDefaultProfilePhotoUrl();
+    }
+
+    /**
+     * Accesseur pour les pays
+     */
+    public function getDistinctCountries()
+    {
+        return $this->addresses()
+            ->with('country')
+            ->get()
+            ->pluck('country')
+            ->unique('code')
+            ->values(); // Réindexe la collection
     }
 
     // ========== MÉTHODES MÉTIER ==========
@@ -372,13 +427,6 @@ class User extends Authenticatable
 
     // ========== RELATIONS ==========
 
-    /**
-     * Relation avec les commandes (exemple)
-     */
-    public function orders()
-    {
-        // return $this->hasMany(Order::class);
-    }
 
     /**
      * Relation avec les sessions
@@ -397,28 +445,58 @@ class User extends Authenticatable
     {
         return [
             'name' => 'required|string|max:120',
-            'email' => 'required|email|max:160|unique:users,email,' . $id,
-            'password' => $id ? 'nullable|min:8' : 'required|min:8',
-            'shipping_country' => 'nullable|string|size:2',
-            'shipping_city' => 'nullable|string|max:100',
-            'shipping_postal_code' => 'nullable|string|max:23',
-            'billing_address' => 'nullable|string',
-            'phone' => 'nullable|string|max:30',
-            'profile_photo_path' => 'nullable|string|max:2048',
+            'email' => [
+                'required',
+                'email:rfc,dns',
+                'max:160',
+                Rule::unique('users', 'email')->ignore($id)
+            ],
+            'password' => [
+                $id ? 'nullable' : 'required',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
+            ],
+            'phone' => 'nullable|string|max:30|regex:/^[\+]?[0-9\s\-\(\)]+$/',
+            'profile_photo_path' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 
     /**
      * Messages de validation personnalisés
      */
-    public static function validationMessages()
+
+   /* public static function validationMessages()
     {
         return [
-            'name.required' => 'Le nom est obligatoire',
-            'email.required' => 'L\'email est obligatoire',
-            'email.unique' => 'Cet email est déjà utilisé',
-            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères',
-            'shipping_country.size' => 'Le code pays doit contenir exactement 2 caractères',
+            // Nom
+            'name.required' => 'Le nom est obligatoire.',
+            'name.string' => 'Le nom doit être une chaîne de caractères.',
+            'name.max' => 'Le nom ne peut pas dépasser 120 caractères.',
+
+            // Email
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'L\'adresse email n\'est pas valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
+            'email.max' => 'L\'adresse email ne peut pas dépasser 160 caractères.',
+
+            // Mot de passe
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.regex' => 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre.',
+
+            // Téléphone
+            'phone.max' => 'Le numéro de téléphone ne peut pas dépasser 30 caractères.',
+            'phone.regex' => 'Le format du numéro de téléphone n\'est pas valide.',
+
+            // Photo de profil
+            'profile_photo_path.image' => 'Le fichier doit être une image.',
+            'profile_photo_path.mimes' => 'L\'image doit être au format jpeg, png, jpg ou gif.',
+            'profile_photo_path.max' => 'L\'image ne peut pas dépasser 2 MB.',
+
+            // Messages génériques utiles
+            'required' => 'Ce champ est obligatoire.',
+            'string' => 'Ce champ doit être une chaîne de caractères.',
+            'max' => 'Ce champ ne peut pas dépasser :max caractères.',
         ];
-    }
+    }*/
 }
