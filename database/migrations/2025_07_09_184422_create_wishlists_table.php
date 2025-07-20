@@ -12,31 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('wishlists', function (Blueprint $table) {
-            $table->id()->comment('Identifiant unique de la liste');
-
-            // Référence à l'utilisateur
-            $table->foreignId('user_id')
-                ->constrained()
-                ->cascadeOnDelete()
-                ->comment('Propriétaire de la liste');
-
-            // Configuration
-            $table->string('name', 100)->comment('Nom de la liste');
-            $table->string('slug', 110)->unique()->comment('Slug pour le partage');
-            $table->boolean('is_public')->default(false)->comment('Liste publique ou privée');
-            $table->boolean('is_default')->default(false)->comment('Liste par défaut de l\'utilisateur');
-
-            // Statistiques
-            $table->integer('items_count')->default(0)->comment('Nombre d\'articles');
-            $table->timestamp('last_added_at')->nullable()->comment('Dernier ajout');
-
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->timestamp('added_at');
             $table->timestamps();
 
-            // Index
-            $table->index(['user_id', 'is_default']);
-            $table->index('is_public');
+            $table->unique(['user_id', 'product_id']);
         });
-
+/*
         Schema::create('wishlist_items', function (Blueprint $table) {
             $table->id()->comment('Identifiant unique de l\'article dans la liste');
 
@@ -65,7 +49,7 @@ return new class extends Migration
             $table->index('wishlist_id');
             $table->index('product_id');
             $table->index('created_at');
-        });
+        });*/
     }
 
     /**

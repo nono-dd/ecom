@@ -144,9 +144,14 @@ class User extends Authenticatable
 
     public function addresses()
     {
-        return $this->hasMany(Address::class);
+        return $this->morphMany(Address::class, 'addressable');
     }
-
+    public function defaultShippingAddress()
+    {
+        return $this->morphOne(Address::class, 'addressable')
+            ->where('type', Address::TYPE_SHIPPING)
+            ->where('is_default', true);
+    }
     public function orders()
     {
         return $this->hasMany(Order::class);
@@ -162,11 +167,11 @@ class User extends Authenticatable
         return $this->hasMany(Selling::class);
     }
 
-    public function countries()
-    {
-        return $this->belongsToMany(Country::class, 'addresses', 'user_id', 'country')
-            ->distinct();
-    }
+    // public function countries()
+    // {
+    //     return $this->belongsToMany(Country::class, 'addresses', 'user_id', 'country')
+    //         ->distinct();
+    // }
 
     public function wishlists()
     {
@@ -465,7 +470,7 @@ class User extends Authenticatable
      * Messages de validation personnalisés
      */
 
-   /* public static function validationMessages()
+    /* public static function validationMessages()
     {
         return [
             // Nom

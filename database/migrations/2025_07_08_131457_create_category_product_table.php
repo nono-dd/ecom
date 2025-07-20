@@ -10,22 +10,22 @@ return new class extends Migration
     {
         Schema::create('category_product', function (Blueprint $table) {
             // Clés étrangères avec contraintes
-            $table->foreignId('categories_id')
+            $table->foreignId('category_id')
                 ->constrained()
                 ->cascadeOnDelete()
                 ->comment('Référence à la catégorie');
 
-            $table->foreignId('products_id')
+            $table->foreignId('product_id')
                 ->constrained()
                 ->cascadeOnDelete()
                 ->comment('Référence au produit');
 
             // Clé primaire composite
-            $table->primary(['categories_id', 'products_id'], 'category_product_primary');
+            $table->primary(['category_id', 'product_id'], 'category_product_primary');
 
             // Index supplémentaires optimisés
-            $table->index('categories_id', 'category_product_category_index');
-            $table->index('products_id', 'category_product_product_index');
+            $table->index('category_id', 'category_product_category_index');
+            $table->index('product_id', 'category_product_product_index');
         });
     }
 

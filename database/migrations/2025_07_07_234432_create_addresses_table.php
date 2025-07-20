@@ -10,20 +10,24 @@ class CreateAddressesTable extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete(); // Lien avec users
-            $table->enum('type', ['shipping', 'billing'])->default('shipping'); // shipping ou billing
-            $table->string('country',2)->comment('ISO 3166-1 alpha-2 country code');
-            $table->string('city', 100);
-            $table->string('postal_code', 22);
-            $table->string('street_address', 255)->nullable();
-            $table->string('phone', 30)->nullable()->comment('Format: +[code pays][numéro]');
-
-
-            $table->index(['user_id', 'type']);
-            $table->index('country');
-            $table->index('postal_code');
-
+            $table->morphs('addressable'); // addressable_id et addressable_type
+            $table->enum('type', ['home', 'work', 'billing', 'shipping'])->default('home');
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('company')->nullable();
+            $table->string('address_line_1');
+            $table->string('address_line_2')->nullable();
+            $table->string('city');
+            $table->string('state')->nullable();
+            $table->string('postal_code');
+            $table->string('country_code', 3); // Code ISO du pays
+            $table->string('phone')->nullable();
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
+
+            $table->foreign('country_code')->references('code')->on('countries');
+            $table->index(['addressable_type', 'addressable_id']);
+            $table->index(['addressable_type', 'addressable_id', 'is_default']);
         });
     }
 

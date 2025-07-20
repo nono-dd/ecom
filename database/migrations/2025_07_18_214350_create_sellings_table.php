@@ -11,12 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('selling', function (Blueprint $table) {
+        Schema::create('sellings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreingId('product_id')->constrained()->cascadeOnDelete();
-            $table->integer('quantite');
-            $table->dateTime('dateVente');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->decimal('price', 10, 2);
+            $table->integer('stock_quantity')->default(1);
+            $table->enum('status', ['active', 'sold', 'inactive', 'pending'])->default('active');
+            $table->text('description')->nullable();
+            $table->enum('condition', ['new', 'like_new', 'good', 'fair', 'poor']);
+            $table->timestamp('listed_at');
+            $table->timestamp('sold_at')->nullable();
             $table->timestamps();
         });
     }
