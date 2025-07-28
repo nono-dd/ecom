@@ -20,14 +20,14 @@ class CreateAddressesTable extends Migration
             $table->string('city');
             $table->string('state')->nullable();
             $table->string('postal_code');
-            $table->string('country_code', 3); // Code ISO du pays
+            $table->char('country_code', 2); // Code ISO du pays
             $table->string('phone')->nullable();
             $table->boolean('is_default')->default(false);
             $table->timestamps();
 
             $table->foreign('country_code')->references('code')->on('countries');
-            $table->index(['addressable_type', 'addressable_id']);
-            $table->index(['addressable_type', 'addressable_id', 'is_default']);
+            // $table->index(['addressable_type', 'addressable_id']);
+            $table->index(['is_default']);
         });
     }
 

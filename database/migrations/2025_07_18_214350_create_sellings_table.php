@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('sellings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->decimal('price', 10, 2);
             $table->integer('stock_quantity')->default(1);
             $table->enum('status', ['active', 'sold', 'inactive', 'pending'])->default('active');
@@ -29,8 +29,11 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('selling');
+        Schema::table('sellings', function (Blueprint $table) {
+            $table->dropForeign(['product_id']);
+        });
+        Schema::dropIfExists('sellings');
     }
 };

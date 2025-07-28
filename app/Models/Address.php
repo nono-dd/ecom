@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class Address extends Model
 {
@@ -34,11 +36,11 @@ class Address extends Model
     // Constantes pour les types d'adresses
     const TYPE_HOME = 'home';
     const TYPE_WORK = 'work';
-    const TYPE_BILLING = 'billing';
-    const TYPE_SHIPPING = 'shipping';
+    const TYPE_BILLING = 'billing'; // Facturation
+    const TYPE_SHIPPING = 'shipping'; // Livraison
 
     /**
-     * Relation polymorphe - une adresse peut appartenir à différents modèles
+     * Relation polymorphe - une adresse peut appartenir a différents modeles
      * (User, Company, etc.)
      */
     public function addressable(): MorphTo
@@ -65,7 +67,7 @@ class Address extends Model
         // Quand on sauvegarde une adresse comme défaut
         static::saving(function ($address) {
             if ($address->is_default) {
-                // Retirer le statut par défaut des autres adresses du même propriétaire et type
+                // Retirer le statut par défaut des autres adresses du meme propriétaire et type
                 static::where('addressable_id', $address->addressable_id)
                     ->where('addressable_type', $address->addressable_type)
                     ->where('type', $address->type)
@@ -78,22 +80,22 @@ class Address extends Model
     /**
      * Scopes
      */
-    public function scopeDefault($query)
+    public function scopeOfDefault(Builder $query): Builder
     {
         return $query->where('is_default', true);
     }
 
-    public function scopeByType($query, string $type)
+    public function scopeByType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
     }
 
-    public function scopeShipping($query)
+    public function scopeShipping(Builder $query): Builder
     {
         return $query->where('type', self::TYPE_SHIPPING);
     }
 
-    public function scopeBilling($query)
+    public function scopeBilling(Builder $query): Builder
     {
         return $query->where('type', self::TYPE_BILLING);
     }
@@ -123,7 +125,7 @@ class Address extends Model
     /**
      * Méthodes utilitaires
      */
-    public function makeDefault(): bool
+    public function makeOfDefault(): bool
     {
         return $this->update(['is_default' => true]);
     }

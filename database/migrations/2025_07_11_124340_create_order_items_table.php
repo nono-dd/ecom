@@ -90,9 +90,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('order_items', function (Blueprint $table) {
-            $table->dropForeign(['product_id']);
-            $table->dropIndex(['product_id']);
-            $table->dropIndex(['status']);
+            // $table->dropForeign(['product_id']);
+            // $table->dropIndex(['status']);
         });
 
         Schema::dropIfExists('order_items');

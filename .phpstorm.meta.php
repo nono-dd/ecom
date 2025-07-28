@@ -4690,9 +4690,9 @@ namespace PHPSTORM_META {
 'user-profile-information.update','user-password.update','password.confirm','password.confirmation','password.confirm.store',
 'two-factor.login','two-factor.login.store','two-factor.enable','two-factor.confirm','two-factor.disable',
 'two-factor.qr-code','two-factor.secret-key','two-factor.recovery-codes','profile.show',
-'sanctum.csrf-cookie','livewire.update','livewire.upload-file',
-'livewire.preview-file','dashboard',
-'storage.local',);
+'api-tokens.index','sanctum.csrf-cookie','livewire.update',
+'livewire.upload-file','livewire.preview-file',
+'dashboard','storage.local',);
         registerArgumentsSet('views', 
 'api.api-token-manager','api.index','auth.confirm-password','auth.forgot-password','auth.login',
 'auth.register','auth.reset-password','auth.two-factor-challenge','auth.verify-email','components.action-message',

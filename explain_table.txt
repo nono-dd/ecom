@@ -1,0 +1,64 @@
+
+
+## 1. create_countries_table.php
+Crée une table de référence des pays avec :
+- Code ISO 2 lettres (clé primaire)
+- Nom, code téléphonique, devise
+- Relation avec la table addresses si elle existe
+
+## 2. create_addresses_table.php
+Table polymorphe pour stocker les adresses (domicile, travail, facturation, livraison) :
+- Relation polymorphe (addressable_id/type)
+- Informations complètes d'adresse
+- Référence au pays via country_code
+
+## 3. create_products_table.php
+Table principale des produits e-commerce :
+- Informations de base (nom, description, marque)
+- Gestion des prix (normal, promotion, coût)
+- Stock et références (SKU, code-barres)
+- Dimensions physiques pour livraison
+- Métadonnées SEO
+- Statuts de publication
+
+## 4. create_categories_table.php
+Système de catégories hiérarchiques :
+- Structure arborescente avec parent_id
+- Gestion de la profondeur et du chemin
+- Métadonnées et SEO
+- Ordre d'affichage personnalisable
+
+## 5. create_orders_table.php
+Table des commandes :
+- Relation avec utilisateur (nullable pour invités)
+- Numérotation et statuts de commande
+- Totaux financiers détaillés
+- Adresses de facturation/livraison en JSON
+- Informations de paiement
+
+## 6. create_reviews_table.php
+Système d'avis produits :
+- Un avis par utilisateur/produit (contrainte unique)
+- Note 1-5 et commentaire
+- Vérification d'achat
+
+## 7. create_order_items_table.php
+Lignes de commande détaillées :
+- Snapshot des données produit au moment de l'achat
+- Prix et quantité
+- Options/personnalisations en JSON
+- Suivi individuel par article
+- Intégrations Stripe/Media
+
+## 8. create_order_status_histories_table.php
+Historique des changements de statut :
+- Traçabilité complète des modifications
+- Utilisateur responsable du changement
+- Notes et notifications client
+
+## 9. create_sellings_table.php
+Marketplace/vente entre particuliers :
+- Produits mis en vente par les utilisateurs
+- État de condition du produit
+- Gestion du stock et des statuts de vente
+
